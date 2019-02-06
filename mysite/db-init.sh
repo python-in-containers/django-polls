@@ -23,13 +23,11 @@ while True:
     except socket.error as ex:
         print('DB Engine not ready')
         time.sleep(0.1)
-EOF
 
-python manage.py migrate
+from django.core.management import call_command
 
-#echo "from django.contrib.auth.models import User; User.objects.create_superuser('admin', 'admin@example.com', 'admin')" | python manage.py shell
+call_command('migrate')
 
-cat <<-EOF | python manage.py shell
 from django.contrib.auth.models import User
 
 if not User.objects.filter(username='admin').exists():

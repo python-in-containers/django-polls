@@ -1,0 +1,70 @@
+version: '3.1'
+
+services:
+
+  db:
+    image: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - backend
+    env_file:
+      - ./django-polls-postgres.env
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+
+  app-server:
+    depends_on:
+      - db-init
+    image: krisocc/app-server:1.0
+    command: bash run-server.sh
+    env_file:
+      - ./django-polls-postgres.env
+    networks:
+      - frontend
+      - backend
+    ports:
+      - 8001:8001
+    deploy:
+      mode: replicated
+      replicas: 2
+
+  db-init:
+    depends_on:
+      - db
+    image: krisocc/app-server:1.0
+    command: bash db-init.sh
+    env_file:
+      - ./django-polls-postgres.env
+    networks:
+      - backend
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: none
+
+  nginx:
+    depends_on:
+      - app-server
+    image: nginx
+    networks:
+      - frontend
+    ports:
+      - 8000:8000
+    volumes:
+      - ./mysite_nginx.conf:/etc/nginx/conf.d/mysite_nginx.conf
+    deploy:
+      mode: global
+
+volumes:
+  pgdata:
+
+networks:
+  frontend:
+  backend:
