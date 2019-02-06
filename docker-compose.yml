@@ -11,6 +11,16 @@ services:
     env_file:
       - ./django-polls-postgres.env
 
+  db-init:
+    depends_on:
+      - db
+    image: krisocc/app-server:1.0
+    command: bash db-init.sh
+    env_file:
+      - ./django-polls-postgres.env
+    networks:
+      - backend
+
   app-server:
     depends_on:
       - db
