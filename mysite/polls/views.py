@@ -36,6 +36,49 @@ def index(request):
     context = {'latest_question_list': latest_question_list}
     return render(request, 'polls/index.html', context)
 
+def init(request):
+    import socket
+    import time
+    from django.conf import settings
+
+    message = ''
+
+    # Read Database config from project settings.py file, as described at https://docs.djangoproject.com/en/2.1/topics/settings/#using-settings-in-python-code
+
+    db_host = settings.DATABASES['default']['HOST']
+    db_port = int(settings.DATABASES['default']['PORT'])
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    while True:
+        try:
+            s.connect((db_host, db_port))
+            s.close()
+            break
+        except socket.error as ex:
+            print('DB Engine not ready')
+            time.sleep(0.1)
+
+    from django.core.management import call_command
+
+    from io import StringIO
+    out = StringIO()
+
+    call_command('migrate', stdout=out, stderr=out)
+
+    message += out.getvalue()
+    message += '\n'
+
+    from django.contrib.auth.models import User
+
+    if not User.objects.filter(username='admin').exists():
+        User.objects.create_superuser('admin', 'admin@example.com', 'admin')
+        message += 'User admin created\n'
+    else:
+        message += 'User admin already exists\n'
+
+    return render(request, 'polls/init.html', {'message':message})
+
+
 def detail(request, question_id):
     question = get_object_or_404(Question, pk=question_id)
     return render(request, 'polls/detail.html', {'question': question})
