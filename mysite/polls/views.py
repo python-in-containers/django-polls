@@ -55,7 +55,6 @@ def init(request):
             s.close()
             break
         except socket.error as ex:
-            print('DB Engine not ready')
             time.sleep(0.1)
 
     from django.core.management import call_command
